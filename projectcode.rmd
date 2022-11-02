@@ -1,0 +1,151 @@
+---
+title: '**Visualization**: Project Report'
+author: 'Name: Anusha R     Roll Number: MDS202212'
+date: "Deadline : 30 Oct 2022"
+---
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 12 )
+
+```
+<br> <br> <br>
+<h1> Introduction </h1> 
+The dataset provides information on state-wise crop production in India ranging from 1997 to 2015. We analyze the production of different crops across states in different agricultural season of a year. Various inferences are drawn and the results are visualized using R.
+<br>
+<br>
+<h1> Dataset Description </h1>
+<br>
+The dataset is downloaded from Kaggle: https://www.kaggle.com/abhinand05/crop-production-in-india
+<br>
+```{r}
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(DT)
+f = "D:/R/Project/crop_production.csv" 
+df = read.csv(f)
+d = df
+d[1,] = df[12389,]
+d[2,] = df[57152,]
+d[3,] = df[139088,]
+d[4,] = df[76867,]
+d[5,] = df[125193,]
+d[6,] = df[146818,]
+datatable(head(d), height=200, options=list(scrollX=TRUE))
+```
+<br>
+<br>
+<br>
+<br>
+<br>
+<br> <br> <br> <br>
+The data set contains 246091 rows and 7 columns. 
+<br> <br>
+Columns with categorical values are 'State_Name', 'District_Name', 'Crop_Year', 'Season' and  'Crop'. 'Area' and 'Production' are columns with numerical values, with hectares and tonnes respectively. 
+The total number of rows with atleast a null value in any column is 3730. 3730 rows out of 246091 rows is relatively small and can be ignored. Hence these rows are dropped and the new dataframe with 242361 rows and 7 columns obtained is used for further analysis and visualization. 
+<br> <br>
+<h1> Graphical Presentation of Key Variables </h1>
+```{r}
+count = 0
+for(i in as.data.frame(t(df))){
+  for(j in i){
+    if(is.na(j)){
+      count = count+1
+      break
+    } 
+  }
+}
+```
+
+```{r}
+df1 = na.omit(df)
+```
+```{r}
+df_grp = summarise(group_by(df1, State_Name),
+                          tot_prod = sum(Production))
+df_sort = head(df_grp[order(df_grp$tot_prod, decreasing = T),],4)
+```
+<br>
+The table is grouped by the name of the state, total production of each state is calculated and top 4 states in terms of production are obtained.
+<br> <br> <br>
+```{r}
+p1 = ggplot(df_sort, aes(x = State_Name, y= tot_prod/(10^8), fill = "")) +
+    geom_bar(stat = 'identity', width = 0.8) + 
+  scale_fill_manual(values=c('#790252')) + ggtitle('States with highest production') +
+  theme(axis.title = element_text(size = 20), axis.text = element_text(size = 17), legend.text = element_text(30), plot.title = element_text(hjust = 0.5), legend.key.size = unit(1.5,'cm')) + xlab('State') +ylab('Production in 100 millions')
+   
+p1
+```
+<br> <br> <br>
+
+The above bar graph displays the production of top 4 states in terms of their total production. It is evident from the graph that Kerala has the highest production of total crops. 
+<br> <br> <br>
+
+```{r}
+dfk = df1[df1$State_Name == 'Kerala',]
+dfdis = subset(dfk, select = -c(1,3,4,5))
+dfk_dist = summarise(group_by(dfdis, District_Name), tot_prod = sum(Production), tot_area = sum(Area) )
+dfk_dist['Density'] = dfk_dist[,2]/dfk_dist[,3]
+dfk_dist
+```
+<br> <br>
+The above table gives the total production and total area of land for agriculture in different districts of Kerala, from which production density (per unit area) is calculated and a bar graph is plotted.
+<br> <br> <br>
+
+```{r}
+p2 = ggplot(dfk_dist, aes(x = District_Name, y= Density))     + geom_bar(stat = 'identity', width = 0.5, 
+      color = 'blue', fill = 'blue') +
+    theme(axis.text.x = element_text(angle = 90, hjust =     1, vjust = 0.5)) + xlab('District') + ylab('Density')    + ggtitle('Production Density in different districts of Kerala ') + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 17), legend.text = element_text(20), legend.key.size = unit(1.5,'cm'), plot.title = element_text(hjust = 0.5))  
+   
+p2
+
+```
+\pagebreak
+```{r}
+df_year = summarise(group_by(df1, Crop_Year), tot_prod = sum(Production))
+p3 = ggplot(df_year, aes(x=Crop_Year, y=tot_prod/(10^8) )) +
+  geom_line(color="red", size = 2)+ geom_point()  + xlab("Year")+ ylab("Production in millions") +
+  theme(axis.title = element_text(size = 20), axis.text = element_text(size = 17), legend.text = element_text(20), legend.key.size = unit(1.5,'cm'))
+p3
+```
+<br> 
+The above graph is a time series plot, which displays the total production of crops in each year from 1997 to 2015. 
+<br> <br> <br>
+
+```{r}
+df_season = summarise(group_by(df1, Season), tot_prod = sum(Production))
+df_s <- df_season %>% slice(-c(5))
+df_s[,2] = df_s[,2]/sum(df_s[,2]) 
+colnames(df_s)[colnames(df_s) == 'tot_prod'] <- 'Prod_Prop'
+```
+The proportion of production of seasonal crops in each season is calculated and pie chart is plotted.
+<br> <br>
+```{r}
+p4 = ggplot(df_s, aes(x="", y=Prod_Prop ,   fill=Season))+ geom_bar(width = 1, stat = "identity") + coord_polar("y") + 
+  geom_label_repel(data=df_s, aes(y=Prod_Prop, label = paste0(round(Prod_Prop, digits = 2))), size = 4.5, nudge_x = 1, show.legend = FALSE ) +xlab("Season") + ylab("Proportion") + theme(axis.title = element_text(size = 20), axis.text = element_text(size = 17), legend.text = element_text(20), legend.key.size = unit(1.5,'cm')) + theme_void()
+p4
+```
+
+The above pie chart shows the proportion of  production of crops across different seasons of a year.
+<br> <br>
+
+<h1> Summary </h1>
+<br>
+<UL>
+<li>
+When state-wise total production across years is plotted, it is seen that Kerala is the state with maximum crop production, followed by Andhra Pradesh, Tamil Nadu and Uttar Pradesh.
+</li><br>
+<li>
+The production density of different districts in a state is plotted as a bar graph.Here, we see that Kozhikode is the district in Kerala with highest crop production density.
+</li><br>
+<li>
+It is visible from the time series plot that highest total production is obtained in the year 2011 and the prodution has been the lowest in the year 2015.
+</li><br>
+<li>
+60% of production of crops happens in Kharif season, followed by Rabi season (30%).  
+</li><br>
+</ul>
+<br>
+<h1> Conclusion </h1> <br>
+We analyzed the production of crop varieties in different states over several years and how it varies in each agricultural season. Crop-wise analysis will be made in the interactive dashboard and we can see how the production quantity of each crop varies across seasons depending on each geographical location.
+State-wise production of each crop in every year can be analyzed to predict its production in future.
+<br>
