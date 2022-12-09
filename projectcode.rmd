@@ -3,6 +3,11 @@ title: '**Visualization**: Project Report'
 author: 'Name: Anusha R     Roll Number: MDS202212'
 date: "Deadline : 30 Oct 2022"
 ---
+
+Presentation Video Link: https://youtu.be/PBc7_BKATA0
+RShiny Dashboard Link: https://anushar.shinyapps.io/Project/
+
+
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 12 )
 
@@ -149,3 +154,6 @@ It is visible from the time series plot that highest total production is obtaine
 We analyzed the production of crop varieties in different states over several years and how it varies in each agricultural season. Crop-wise analysis will be made in the interactive dashboard and we can see how the production quantity of each crop varies across seasons depending on each geographical location.
 State-wise production of each crop in every year can be analyzed to predict its production in future.
 <br>
+
+
+
